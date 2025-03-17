@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Process from "../Process";
 import { FaInfoCircle, FaTimes } from "react-icons/fa";
+import YouTubePlayer from "./YoutubePlayer";
 
 export default function InputPage() {
   const location = useLocation();
@@ -19,6 +20,8 @@ export default function InputPage() {
   const [processType, setProcessType] = useState("");
   const videoRef = useRef(null);
   const navigate = useNavigate();
+
+ 
 
   useEffect(() => {
     let timer;
@@ -36,6 +39,11 @@ export default function InputPage() {
     videoRef.current?.play();
     setIsPlaying(true);
   };
+
+
+
+ 
+
 
   const handlePause = () => {
     videoRef.current?.pause();
@@ -90,22 +98,26 @@ export default function InputPage() {
       <div className={styles.videoContainer}>
       {videoSrc ? (
           videoSrc.includes("youtube.com") ? (
-            <iframe
-          style={{
+        //     <iframe
+        //   style={{
        
-          aspectRatio: "3 / 2",
+        //   aspectRatio: "3 / 2",
         
-        }} 
+        // }} 
            
-            width={500}
+        //     width={500}
         
-            src={videoSrc}
-            frameBorder="0"
-            allowFullScreen
-            className={styles.videoPlayer}
-          />
+        //     src={videoSrc}
+        //     frameBorder="0"
+        //     allowFullScreen
+        //     className={styles.videoPlayer}
+        //   />
+        <YouTubePlayer videoSrc={videoSrc}>
+
+        </YouTubePlayer>
+        
           ) : (
-            <video ref={videoRef} src={videoSrc} controls height="600" width="400" className={styles.videoPlayer} />
+            <video ref={videoRef} src={videoSrc} controls height="560" width="315" className={styles.videoPlayer} />
           )
         ) : (
           <p>No video selected.</p>
@@ -130,15 +142,21 @@ export default function InputPage() {
         </div>
       </div>
 
-            <div style={{display:"flex",flexDirection:"column"}}>
-            <span style={{fontWeight:"bold",paddingBottom:"0.5rem"}}>Time: {new Date(time * 1000).toISOString().substr(14, 5)}</span>
-               <div className={styles.controlsContainer}>
-          <button onClick={handleReset} className="btn btn-secondary">Reset</button>
-          <button onClick={handleStart} className="btn btn-success">Start</button>
-          <button onClick={handlePause} className="btn btn-warning">Pause</button>
+      
+        {videoSrc.includes("youtube.com") ? null : (
+  <div  style={{ display: "flex", flexDirection: "column", marginBottom:"8rem"}}>
+    <span style={{ fontWeight: "bold", paddingBottom: "0.5rem" }}>
+      Time: {new Date(time * 1000).toISOString().substr(14, 5)}
+    </span>
+    <div className={styles.controlsContainer}>
+      <button onClick={handleReset} className="btn btn-secondary">Reset</button>
+      <button onClick={handleStart} className="btn btn-success">Play</button>
+      <button onClick={handlePause} className="btn btn-warning">Pause</button>
+    </div>
+  </div>
+)}
+
           
-        </div>
-            </div>
 
      
 

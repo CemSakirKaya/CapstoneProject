@@ -1,0 +1,229 @@
+/* Tüm sayfayı mavi arka planla kaplayan konteyner */
+.resultPageContainer {
+    width: 100%;
+    min-height: 100vh;
+    margin: 0;
+    padding: 2rem;
+    background-color: #f5fafa; /* Mavi arka plan */
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+    box-sizing: border-box;
+    position: relative;
+  }
+  
+  /* Sağ üstte Save ikonu */
+  .saveIcon {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    background: #6cb8f6;
+    color: #fff;
+    padding: 0.5rem;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    z-index: 9999;
+    transition: background-color 0.3s ease, transform 0.2s;
+  }
+  .saveIcon:hover {
+    background-color: #5aa4e0;
+    transform: scale(1.05);
+  }
+  
+  /* Sol altta Back butonu */
+  .backButtonContainer {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 9999;
+  }
+  .backButton {
+    background-color: #6cb8f6;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 50px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: background-color 0.3s ease, transform 0.2s;
+  }
+  .backButton:hover {
+    background-color: #5aa4e0;
+    transform: scale(1.05);
+  }
+  
+  /* Sol Kısım */
+  .leftSection {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  /* Steps + Table yan yana */
+  .stepsAndTableRow {
+    display: flex;
+    flex-direction: row;
+    gap: 2rem; /* Steps ve tablo arasında boşluk */
+  }
+  
+  /* Steps sütunu */
+  .stepsColumn {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .stepItem {
+    font-size: 14px;
+    color: #333;
+  }
+  
+  /* Time/Distance Tablosu sütunu */
+  .tableColumn {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  
+  /* Başlık satırı (Time - Distance) */
+  .tableHeaderRow {
+    display: flex;
+    width: 200px; /* tablo genişliği */
+    font-weight: bold;
+    color: #333;
+    border-bottom: 2px solid #333;
+    margin-bottom: 0.25rem;
+  }
+  .headerCell {
+    flex: 1;
+    text-align: center;
+    font-size: 14px;
+    border-right: 2px solid #333; /* dikey çizgi */
+    padding-bottom: 0.25rem;
+  }
+  .headerCell:last-child {
+    border-right: none;
+  }
+  
+  /* Veri satırları */
+  .dataRow {
+    display: flex;
+    width: 200px;
+    margin-bottom: 0.2rem;
+  }
+  .dataCell {
+    flex: 1;
+    text-align: center;
+    font-size: 14px;
+    color: #333;
+    border-right: 2px solid #333; /* dikey çizgi */
+    padding: 0.25rem 0;
+  }
+  .dataCell:last-child {
+    border-right: none;
+  }
+  
+  /* 
+    Toplam Time & Distance + 
+    Total Ratios 
+    aynı satırda
+  */
+  .totalsAndRatiosRow {
+    display: flex;
+    flex-direction: row;
+    gap: 2rem; /* TOT ve RAT arası boşluk */
+    align-items: center;
+    margin-top: 0.5rem;
+  }
+  
+  /* Soldaki TOT row */
+  .totalsRow {
+    display: flex;
+    flex-direction: row;
+    gap: 2rem; /* TIME ve DISTANCE arası boşluk */
+    font-weight: bold;
+    font-size: 14px;
+    color: #333;
+    white-space: nowrap; /* Alt satıra kaymaması için */
+  }
+  
+  /* Sağdaki RAT area */
+  .ratiosArea {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  /* Ratios title */
+  .ratiosTitleLine {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: bold;
+    color: #333;
+    font-size: 14px;
+  }
+  .infoIcon {
+    color: #999;
+    cursor: pointer;
+  }
+  
+  /* Ratio item row */
+  .ratiosRow {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .ratioBox {
+    background-color: #f0fbff;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #333;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
+  
+  /* Sağ Kısım: donut placeholder */
+  .rightSection {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .donutContainer {
+    width: 180px;
+    height: 180px;
+    border: 6px dashed #ccc;
+    border-radius: 50%;
+    position: relative;
+  
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .valueText {
+    font-size: 13px;
+    margin: 0.25rem 0;
+    color: #333;
+  }
+  
+  /* Responsive (Mobil) */
+  @media (max-width: 768px) {
+    .resultPageContainer {
+      flex-direction: column;
+    }
+    .tableHeaderRow,
+    .dataRow {
+      width: 100%;
+    }
+    .totalsAndRatiosRow {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+  

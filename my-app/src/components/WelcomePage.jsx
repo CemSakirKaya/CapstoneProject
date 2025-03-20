@@ -5,7 +5,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import { FaVideo, FaLink } from "react-icons/fa";
 
 export default function WelcomePage() {
-  const navigate = useNavigate(); // React Router navigation
+  const navigate = useNavigate();
   const [videoFile, setVideoFile] = useState(null);
   const [videoURL, setVideoURL] = useState("");
 
@@ -13,14 +13,13 @@ export default function WelcomePage() {
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
-      setVideoFile(URL.createObjectURL(file)); // Create object URL
+      setVideoFile(URL.createObjectURL(file));
       console.log("Selected file:", file.name);
     }
   };
 
   const handleURLInput = () => {
     const url = prompt("Enter video URL:");
-  
     if (!url) return; // If user cancels
   
     // Check if it's a YouTube URL
@@ -44,7 +43,6 @@ export default function WelcomePage() {
   
     alert("Invalid URL. Please enter a YouTube link or a direct video file URL.");
   };
-  
 
   // Handle drag & drop
   const handleDragOver = (event) => {
@@ -70,8 +68,9 @@ export default function WelcomePage() {
   };
 
   return (
-    <div className={` ${styles.welcomeContainer}`}>
-      <div className="text-center">
+    <div className={styles.welcomeContainer}>
+      {/* LOGO Sabit (fixed) en üst ortada */}
+      <div className={styles.logoContainer}>
         <img
           src="logo.png" // Replace with your logo path
           alt="Flow Process Chart Maker"
@@ -118,28 +117,39 @@ export default function WelcomePage() {
         </div>
       </div>
 
+      {/* Video Preview */}
       <div className="text-center mt-3">
-  {videoURL ? (
-    videoURL.includes("youtube.com") ? (
-      <iframe
-        width="560"
-        height="315"
-        src={videoURL}
-        frameBorder="0"
-        allowFullScreen
-        className={styles.videoPlayer}
-      ></iframe>
-    ) : (
-      <video src={videoURL} controls className={styles.videoPlayer} />
-    )
-  ) : videoFile ? (
-    <video width="560" height="315" src={videoFile} controls className={styles.videoPlayer} />
-  ) : null}
-</div>
+        {videoURL ? (
+          videoURL.includes("youtube.com") ? (
+            <iframe
+              width="560"
+              height="315"
+              src={videoURL}
+              frameBorder="0"
+              allowFullScreen
+              className={styles.videoPlayer}
+            ></iframe>
+          ) : (
+            <video
+              src={videoURL}
+              controls
+              className={styles.videoPlayer}
+            />
+          )
+        ) : videoFile ? (
+          <video
+            width="560"
+            height="315"
+            src={videoFile}
+            controls
+            className={styles.videoPlayer}
+          />
+        ) : null}
+      </div>
 
-      {/* Next Button */}
-      <div className="text-center mt-3">
-        <button className="btn btn-lg btn-primary" onClick={handleNext}>
+      {/* Next Button in bottom-right corner */}
+      <div className={styles.navigationButtons}>
+        <button className={styles.navButton} onClick={handleNext}>
           Next <span>&#10148;</span>
         </button>
       </div>

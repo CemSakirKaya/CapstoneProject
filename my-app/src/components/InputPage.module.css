@@ -1,254 +1,264 @@
-/* InputPage.module.css */
-
+/* Ana sayfa konteyneri: solda "leftSection", sağda "rightSection" */
 .inputPageContainer {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding: 20px;
-    gap: 20px;
-    flex-wrap: wrap;
-    position: relative;
-  }
-  
-  .videoContainer {
-    flex: 1;
-    max-width: 560px ;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    gap: 2rem;
-  }
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  background-color: #f5fafa;
+  align-items: flex-start;
+  padding: 20px;
+  gap: 20px;
+  position: relative;
+  /* flex-wrap: wrap;  // Ekran daraldığında alt satıra geçmesi için açabilirsiniz */
+}
 
-  .videoDetailsContainer{
-    flex: 1;
-    max-height: 50%;
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    gap: 1rem;
-  }
-  
-  .videoPlayer {
-    display: block;
-    width: 100% ;
-    max-width: 560;
-    max-height: 315px;
-    min-width: 500;
-    object-fit: auto;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  }
-  
-  .controlsContainer {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    gap: 12px;
-    width: 100%;
-    margin-top: 10px;
-    position: relative;
-   
-  }
-  
-  .processContainer {
-    position: relative;
-    bottom: 0;
-    left: 0;
-    background-color: #eaffb2;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    min-height: 200px;
-    max-height: 400px;
-    min-width: max-content;
-    max-width: 400px;
-    width: 100%;
-    
-    
-    overflow-y: scroll;
-    overflow-x: scroll;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .stepsList{
-    max-width: 400px;
-    width: 100%;
-    
-    
-    overflow-y: scroll;
-    overflow-x: scroll;
-    
-  }
-  
-  .processStep {
-    background-color: #b2f0a8;
-    padding: 12px;
-    border-radius: 6px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 10px;
-    margin-bottom: 10px;
-    width: max-content;
-  }
-  
-  .processStep input {
-    border: none;
-    background: transparent;
-    outline: none;
-    height: 100%;
-
-  }
-  
-  .toggledProcessCard {
-    position: relative;
-    right: 0;
-    top: 0;
-    background-color: #e8fcd4;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    width: 100%;
-    min-width: 250px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding-top: 2rem;
-  }
-
-  
-  
-  .navigationButtons {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 20px;
-    width: 100%;
-  }
-  
-  .backButton, .outputButton {
-    background-color: #6ea8fe;
-    border: none;
-    padding: 10px 18px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    font-weight: bold;
-    color: white;
-  }
-  
-  .backButton:hover, .outputButton:hover {
-    background-color: #5b92e5;
-    transform: scale(1.05);
-  }
-  
-  @media (max-width: 768px) {
-    .inputPageContainer {
-      flex-direction: column;
-      align-items: center;
-    }
-    
-    .videoContainer, .processContainer, .toggledProcessCard {
-      max-width: 90%;
-    }
-    
-    .controlsContainer {
-      flex-direction: column;
-      align-items: center;
-      position: static;
-      margin-top: 15px;
-    }
-    
-    .toggledProcessCard {
-      position: static;
-      width: 100%;
-    }
-  }
-  .fixedButtonsContainer {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    display: flex;
-    gap: 10px;
-  }
-  
-  .navButton {
-    background-color: #6cb8f6;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 50px;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.3s ease, transform 0.2s;
-  }
-  
-  .navButton:hover {
-    background-color: #5aa4e0;
-    transform: scale(1.05);
-  }
-
-  .processIcons{
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 1rem;
-  }
-
-  .processInputs{
-    padding-top: 1rem;
-  }
-
-  .processPhotoContainer{
-    display: flex;
+/* SOL KISIM (Video, Time/Controls, Process List) */
+.leftSection {
+  display: flex;
   flex-direction: column;
-  align-items: center;
-  }
+  gap: 1rem;
+  flex: 2; /* Bu değeri arttırırsanız sol taraf genişler */
+}
 
+.videoContainer {
+  background: #f0f0f0; /* Örnek arka plan */
+  border-radius: 8px;
+  padding: 1rem;
+}
 
-  .processPhotoContainer:hover{
-    display: flex;
+.videoPlayer {
+  width: 100%;
+  max-width: 560px;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* 
+  Video altındaki zaman/controls ve step container'ı 
+  yanyana göstereceğimiz alan.
+*/
+.controlsStepsRow {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+/* Zaman ve Kontroller (Play/Pause/Reset) */
+.timeAndControls {
+  flex: 1;
+  background: #f9f9f9;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.timeDisplay {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.controlsContainer {
+  display: flex;
+  gap: 1rem;
+}
+
+/* Process Alanı ve Step Listesi (Yeşil Alan) */
+.processContainer {
+  flex: 2;
+  background-color: #eaffb2;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+
+  display: flex;
   flex-direction: column;
+  gap: 1rem;
+  min-height: 200px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.stepsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Her bir step satırı */
+.processStep {
+  background-color: #b2f0a8;
+  padding: 0.75rem;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+  /* ikonları sağa almak için flex ayarı */
+  display: flex;
   align-items: center;
-  background-color: greenyellow;
-  border-radius: 1rem;
+  justify-content: space-between;
+}
+
+/* Step metni solda */
+.stepText {
+  flex: 1;
+}
+
+/* Onaylanmamış step'te gösterilecek tik ve çarpı ikonları */
+.iconContainer {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* İkon stilleri */
+.checkIcon {
+  color: green;
   cursor: pointer;
+}
+
+.deleteIcon {
+  color: red;
+  cursor: pointer;
+}
+
+/* Onaylı step'te çıkacak düzenleme ikonu */
+.editIcon {
+  color: #333;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.editIcon:hover {
+  color: #666;
+}
+
+/* SAĞ KISIM (toggledProcessCard) */
+.rightSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1; /* Bu değeri azaltıp arttırarak sağ kolon genişliğini ayarlayabilirsiniz */
+  min-width: 300px;
+  max-width: 400px;
+}
+
+/* Kartın kendisi */
+.toggledProcessCard {
+  background-color: #e8fcd4;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  position: relative; /* X (FaTimes) ikonu için önemli */
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: center;
+  position: relative;
+}
+
+/* Çarpı ikonunu sağ üst köşeye sabitleyen sınıf */
+.closeIcon {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  color: red;
+  height: 2rem;
+  cursor: pointer; /* Üzerine gelindiğinde fare imleci çıkar */
+}
+
+.closeIcon:hover {
+  color: darkred; /* İsteğe bağlı hover rengi */
+}
+
+/* Process Icons, Inputlar */
+.processIcons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.processPhotoContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  border-radius: 1rem;
+  padding: 0.5rem;
+}
+
+.processPhotoContainer:hover {
+  background-color: greenyellow;
+}
+
+.selected {
+  background-color: red;
+  color: white; /* Kırmızı arka plan için */
+}
+
+.processPhotoContainerPhoto {
+  width: auto;
+  height: 3.5rem;
+}
+
+.processText {
+  font-size: 14px;
+  margin-top: 0.5rem;
+}
+
+.processInputs {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Sağ alt köşedeki Back ve Output butonları */
+.navigationButtons {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  gap: 1rem;
+  z-index: 9999;
+}
+
+.navButton {
+  background-color: #6cb8f6;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  transition: background-color 0.3s ease, transform 0.2s;
+}
+
+.navButton:hover {
+  background-color: #5aa4e0;
+  transform: scale(1.05);
+}
+
+/* Responsive (Mobil) */
+@media (max-width: 768px) {
+  .inputPageContainer {
+    flex-direction: column;
   }
 
-  .selected{
-    background-color: red;
-    border-radius: 2rem;
+  .leftSection, .rightSection {
+    max-width: 100%;
+    flex: none;
   }
 
-
-
-  .processPhotoContainerPhoto{
-    
-        width: auto;  /* Adjust as needed */
-        height: 3.5rem; /* Maintain aspect ratio */
-      
-  }
-  .processText{
-    margin-top: 5px;
-    font-size: 14px;
-  }
-  
-  .cardHeader{
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    width: 100%;
+  .controlsStepsRow {
+    flex-direction: column;
   }
 
-  
+  .toggledProcessCard {
+    margin-top: 1rem;
+  }
+}

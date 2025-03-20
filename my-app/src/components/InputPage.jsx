@@ -4,7 +4,7 @@ import styles from "./InputPage.module.css";
 import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Process from "../Process";
-import { FaInfoCircle, FaTimes } from "react-icons/fa";
+import { FaInfoCircle, FaTimes, FaCheck, FaEdit } from "react-icons/fa";
 import YouTubePlayer from "./YoutubePlayer";
 
 export default function InputPage() {
@@ -21,8 +21,7 @@ export default function InputPage() {
   const videoRef = useRef(null);
   const navigate = useNavigate();
 
- 
-
+  // Oynatma zamanlayıcısı
   useEffect(() => {
     let timer;
     if (isPlaying) {
@@ -39,11 +38,6 @@ export default function InputPage() {
     videoRef.current?.play();
     setIsPlaying(true);
   };
-
-
-
- 
-
 
   const handlePause = () => {
     videoRef.current?.pause();
@@ -63,113 +57,153 @@ export default function InputPage() {
     setShowProcessCard(true);
   };
 
- 
-    const handleClickOfProcessType = (type) => () =>   {
-        setProcessType(type);
-  }
-
-  
-
-
- 
+  const handleClickOfProcessType = (type) => () => {
+    setProcessType(type);
+  };
 
   const handleSubmitProcess = () => {
     if (stepDescription.trim()) {
-      setSteps((prevSteps) => [...prevSteps, { description: stepDescription.trim(), time: processTime, distance: processDistance }]);
+      setSteps((prevSteps) => [
+        ...prevSteps,
+        {
+          description: stepDescription.trim(),
+          time: processTime,
+          distance: processDistance,
+          confirmed: false,
+        },
+      ]);
       setStepDescription("");
       setProcessTime("");
       setProcessDistance("");
     }
     setShowProcessCard(false);
 
-    console.log(processTime,processDistance,stepDescription,processType)
-
-    var a = new Process(processType,processTime,processDistance,stepDescription)
-    console.log(a)
-    console.log(  a instanceof Process)
+    // Örnek: Process nesnesi
+    const newProcess = new Process(processType, processTime, processDistance, stepDescription);
+    console.log(newProcess);
   };
 
+  // Step onaylamak için (tik)
+  const handleConfirmStep = (index) => {
+    setSteps((prevSteps) => {
+      const updatedSteps = [...prevSteps];
+      updatedSteps[index].confirmed = true;
+      return updatedSteps;
+    });
+  };
 
-  
+  // Step silmek için (çarpı)
+  const handleDeleteStep = (index) => {
+    setSteps((prevSteps) => prevSteps.filter((_, i) => i !== index));
+  };
+
+  // Onaylı step’i düzenlemek için (edit)
+  // => Tekrar confirmed: false yaparak tik/çarpı görünür hale getiriyoruz
+  const handleEditStep = (index) => {
+    setSteps((prevSteps) => {
+      const updatedSteps = [...prevSteps];
+      updatedSteps[index].confirmed = false;
+      return updatedSteps;
+    });
+    // Burada step’i yeniden düzenlemek için modal/form açabilirsiniz.
+  };
 
   return (
     <div className={styles.inputPageContainer}>
-      {/* Video Section */}
-      <div className={styles.videoContainer}>
-      {videoSrc ? (
-          videoSrc.includes("youtube.com") ? (
-        //     <iframe
-        //   style={{
-       
-        //   aspectRatio: "3 / 2",
-        
-        // }} 
-           
-        //     width={500}
-        
-        //     src={videoSrc}
-        //     frameBorder="0"
-        //     allowFullScreen
-        //     className={styles.videoPlayer}
-        //   />
-        <YouTubePlayer videoSrc={videoSrc}>
-
-        </YouTubePlayer>
-        
+      {/* SOL KISIM */}
+      <div className={styles.leftSection}>
+        {/* Video Alanı */}
+        <div className={styles.videoContainer}>
+          {videoSrc ? (
+            videoSrc.includes("youtube.com") ? (
+              <YouTubePlayer videoSrc={videoSrc} />
+            ) : (
+              <video
+                ref={videoRef}
+                src={videoSrc}
+                controls
+                className={styles.videoPlayer}
+              />
+            )
           ) : (
-            <video ref={videoRef} src={videoSrc} controls height="560" width="315" className={styles.videoPlayer} />
-          )
-        ) : (
-          <p>No video selected.</p>
-        )}
-
-        <div className={styles.videoDetailsContainer}>
-
-     
-
-  {/* Process Section */}
-  <div className={styles.processContainer}>
-        <button onClick={handleAddProcess} className="btn btn-primary">+ Process</button>
-        
-       
-
-        <div className={styles.stepsList}>
-          {steps.map((step, index) => (
-            <div key={index} className={styles.processStep}>
-              Step {index + 1}: {step.description}
-            </div>
-          ))}
+            <p>No video selected.</p>
+          )}
         </div>
+
+        {/* Video YouTube değilse zaman/controls ve steps yanyana gözükecek */}
+        {!videoSrc.includes("youtube.com") && (
+          <div className={styles.controlsStepsRow}>
+            {/* Process Container Solda */}
+            <div className={styles.processContainer}>
+              <button onClick={handleAddProcess} className="btn btn-primary">
+                + Process
+              </button>
+              <div className={styles.stepsList}>
+                {steps.map((step, index) => (
+                  <div key={index} className={styles.processStep}>
+                    {/* Step Açıklaması */}
+                    <div className={styles.stepText}>
+                      Step {index + 1}: {step.description}
+                    </div>
+
+                    {/* confirmed: false => tik & çarpı; true => edit ikonu */}
+                    {!step.confirmed ? (
+                      <div className={styles.iconContainer}>
+                        <FaCheck
+                          className={styles.checkIcon}
+                          onClick={() => handleConfirmStep(index)}
+                        />
+                        <FaTimes
+                          className={styles.deleteIcon}
+                          onClick={() => handleDeleteStep(index)}
+                        />
+                      </div>
+                    ) : (
+                      <FaEdit
+                        className={styles.editIcon}
+                        onClick={() => handleEditStep(index)}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Kontrol Ekranı Sağda */}
+            <div className={styles.timeAndControls}>
+              <span className={styles.timeDisplay}>
+                Time: {new Date(time * 1000).toISOString().substr(14, 5)}
+              </span>
+              <div className={styles.controlsContainer}>
+              <button onClick={handleStart} className="btn btn-success">
+                  Start
+                </button>
+                <button onClick={handlePause} className="btn btn-warning">
+                  Pause
+                </button>
+                <button onClick={handleReset} className="btn btn-secondary">
+                  Reset
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
-      
-        {videoSrc.includes("youtube.com") ? null : (
-  <div  style={{ display: "flex", flexDirection: "column", marginBottom:"8rem"}}>
-    <span style={{ fontWeight: "bold", paddingBottom: "0.5rem" }}>
-      Time: {new Date(time * 1000).toISOString().substr(14, 5)}
-    </span>
-    <div className={styles.controlsContainer}>
-      <button onClick={handleReset} className="btn btn-secondary">Reset</button>
-      <button onClick={handleStart} className="btn btn-success">Play</button>
-      <button onClick={handlePause} className="btn btn-warning">Pause</button>
-    </div>
-  </div>
-)}
-
-          
-
-     
-
-
-      </div>
-      </div>
-      <div>
-      {showProcessCard && (
+      {/* SAĞ KISIM */}
+      <div className={styles.rightSection}>
+        {showProcessCard && (
           <div className={styles.toggledProcessCard}>
+            {/* Çarpı ikonunu kartın en üstüne ekledik */}
+            <FaTimes
+              className={styles.closeIcon}
+              onClick={() => setShowProcessCard(false)}
+            />
+
             <div className={styles.cardHeader}>
               <h5>Process step description</h5>
-              <FaTimes style={{position:"absolute", top:"0.5rem",right:"0.5rem",color:"red",height:"2rem"}} className={styles.closeIcon} onClick={() => setShowProcessCard(false)} />
             </div>
+
             <input
               type="text"
               value={stepDescription}
@@ -177,35 +211,66 @@ export default function InputPage() {
               placeholder="Enter process description"
               className="form-control"
             />
-            <h5 style={{paddingTop:"1.5rem"}} className={styles.processTypeLabel}>Type of the processes <FaInfoCircle style={{color:"blue",height:"1rem",position:"relative",top:"0px",left:"0.5rem"}} /></h5>
+
+            <h5 style={{ paddingTop: "1.5rem" }}>
+              Type of the processes{" "}
+              <FaInfoCircle
+                style={{ color: "blue", height: "1rem", position: "relative", top: "0px", left: "0.5rem" }}
+              />
+            </h5>
+
             <div className={styles.processIcons}>
+              <div
+                className={`${styles.processPhotoContainer} ${
+                  processType === "Operation" ? styles.selected : ""
+                }`}
+                onClick={handleClickOfProcessType("Operation")}
+              >
+                <img src="Operation.svg" alt="Operation" className={styles.processPhotoContainerPhoto} />
+                <span className={styles.processText}>Operation</span>
+              </div>
 
-            <div className={`${styles.processPhotoContainer} ${processType === "Operation" ? styles.selected : ""}`} onClick={handleClickOfProcessType("Operation")}>
-            <img src="Operation.svg" alt="Operation" className={styles.     processPhotoContainerPhoto} />
-            <span className={styles.processText}>Operation</span>
-             </div>
+              <div
+                className={`${styles.processPhotoContainer} ${
+                  processType === "Transportation" ? styles.selected : ""
+                }`}
+                onClick={handleClickOfProcessType("Transportation")}
+              >
+                <img src="Transportation.svg" alt="Transportation" className={styles.processPhotoContainerPhoto} />
+                <span className={styles.processText}>Transportation</span>
+              </div>
 
-             <div className={`${styles.processPhotoContainer} ${processType === "Transportation" ? styles.selected : ""}`} onClick={handleClickOfProcessType("Transportation")}>
-            <img src="Transportation.svg" alt="Transportation" className={styles.     processPhotoContainerPhoto} />
-            <span className={styles.processText}>Transportation</span>
-             </div>
+              <div
+                className={`${styles.processPhotoContainer} ${
+                  processType === "Delay" ? styles.selected : ""
+                }`}
+                onClick={handleClickOfProcessType("Delay")}
+              >
+                <img src="Delay.svg" alt="Delay" className={styles.processPhotoContainerPhoto} />
+                <span className={styles.processText}>Delay</span>
+              </div>
 
-             <div className={`${styles.processPhotoContainer} ${processType === "Delay" ? styles.selected : ""}`} onClick={handleClickOfProcessType("Delay")}>
-            <img src="Delay.svg" alt="Delay" className={styles.     processPhotoContainerPhoto} />
-            <span className={styles.processText}>Delay</span>
-             </div>
+              <div
+                className={`${styles.processPhotoContainer} ${
+                  processType === "Storage" ? styles.selected : ""
+                }`}
+                onClick={handleClickOfProcessType("Storage")}
+              >
+                <img src="Storage.svg" alt="Storage" className={styles.processPhotoContainerPhoto} />
+                <span className={styles.processText}>Storage</span>
+              </div>
 
-             <div className={`${styles.processPhotoContainer} ${processType === "Storage" ? styles.selected : ""}`} onClick={handleClickOfProcessType("Storage")}>
-            <img src="Storage.svg" alt="Storage" className={styles.     processPhotoContainerPhoto} />
-            <span className={styles.processText}>Storage</span>
-             </div>
-
-             <div className={`${styles.processPhotoContainer} ${processType === "Inspection" ? styles.selected : ""}`} onClick={handleClickOfProcessType("Inspection")}>
-            <img src="Inspection.svg" alt="Inspection" className={styles.     processPhotoContainerPhoto} />
-            <span className={styles.processText}>Inspection</span>
-             </div>
-
+              <div
+                className={`${styles.processPhotoContainer} ${
+                  processType === "Inspection" ? styles.selected : ""
+                }`}
+                onClick={handleClickOfProcessType("Inspection")}
+              >
+                <img src="Inspection.svg" alt="Inspection" className={styles.processPhotoContainerPhoto} />
+                <span className={styles.processText}>Inspection</span>
+              </div>
             </div>
+
             <div className={styles.processInputs}>
               <div>
                 <label>Time (seconds)</label>
@@ -214,7 +279,7 @@ export default function InputPage() {
                   value={processTime}
                   onChange={(e) => {
                     const value = e.target.value;
-                    if (/^\d*$/.test(value)) { // Allows only digits (no letters, no special characters)
+                    if (/^\d*$/.test(value)) {
                       setProcessTime(value);
                     }
                   }}
@@ -246,12 +311,16 @@ export default function InputPage() {
                 />
               </div>
             </div>
-            <button onClick={handleSubmitProcess} className="btn btn-success mt-2">Submit</button>
+
+            <button onClick={handleSubmitProcess} className="btn btn-success mt-2">
+              Submit
+            </button>
           </div>
         )}
-        
       </div>
-      <div className={styles.fixedButtonsContainer}>
+
+      {/* Sağ Alt Köşedeki Back ve Output Butonları */}
+      <div className={styles.navigationButtons}>
         <button onClick={() => navigate("/welcome")} className={styles.navButton}>
           ❮ Back
         </button>
@@ -259,11 +328,6 @@ export default function InputPage() {
           Output ❯
         </button>
       </div>
-
-    
     </div>
   );
-  
 }
-
-

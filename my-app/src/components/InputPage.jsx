@@ -131,7 +131,7 @@ export default function InputPage() {
         </div>
 
         {/* Video YouTube değilse zaman/controls ve steps yanyana gözükecek */}
-        {!videoSrc.includes("youtube.com") && (
+        { (
           <div className={styles.controlsStepsRow}>
             {/* Process Container Solda */}
             <div className={styles.processContainer}>
@@ -170,7 +170,9 @@ export default function InputPage() {
             </div>
 
             {/* Kontrol Ekranı Sağda */}
-            <div className={styles.timeAndControls}>
+
+                      {
+                        !videoSrc.includes("youtube.com") && (<div className={styles.timeAndControls}>
               <span className={styles.timeDisplay}>
                 Time: {new Date(time * 1000).toISOString().substr(14, 5)}
               </span>
@@ -185,7 +187,11 @@ export default function InputPage() {
                   Reset
                 </button>
               </div>
-            </div>
+            </div>)
+                      }
+
+            
+
           </div>
         )}
       </div>

@@ -254,8 +254,8 @@ export default function ResultPage() {
             <div className={styles.infoIconContainer}>
               <FaInfoCircle className={styles.infoIcon} />
               <div className={styles.infoTooltip}>
-                <div><strong>Value Added (VA):</strong> Steps that improve the product and make it more valuable to the customer. It involves operation type of process.</div>
-                <div><strong>Non-Value Added (NVA):</strong> Steps that don't improve the product and are considered waste. It involves rest of the process types such as transportation, delay, storage and inspection.</div>
+                <div><strong>Value Added (VA):</strong> Essential steps that must be performed during the process to move the product closer to completion. These include operations that transform the product and some critical inspections.</div>
+                <div><strong>Non-Value Added (NVA):</strong> Steps that do not directly move the product toward completion or are not strictly necessary, such as transportation, waiting, storage, and inspections that could be avoided.</div>
               </div>
             </div>
           </div>

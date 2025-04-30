@@ -5,52 +5,209 @@ import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Process from "../Process";
 import { FaInfoCircle, FaTimes, FaCheck, FaEdit } from "react-icons/fa";
-import YouTubePlayer from "./YoutubePlayer";
 
 export default function InputPage() {
   const location = useLocation();
-  const videoSrc = location.state?.videoSrc || "";
+  const videoSrc = location.state?.videoSrc || localStorage.getItem('videoSource') || "";
   const [isPlaying, setIsPlaying] = useState(false);
   const [time, setTime] = useState(0);
+  const [videoTime, setVideoTime] = useState(0);
   const [showProcessCard, setShowProcessCard] = useState(false);
   const [steps, setSteps] = useState([]);
   const [stepDescription, setStepDescription] = useState("");
   const [processTime, setProcessTime] = useState("");
   const [processDistance, setProcessDistance] = useState("");
   const [processType, setProcessType] = useState("");
+  const [isValueAdded, setIsValueAdded] = useState(undefined);
   const videoRef = useRef(null);
+  const youtubePlayer = useRef(null);
+  const timerRef = useRef(null);
+  const playerReadyRef = useRef(false);
   const navigate = useNavigate();
 
-  // Oynatma zamanlayıcısı
+  // Load saved steps from localStorage when component mounts
   useEffect(() => {
-    let timer;
-    if (isPlaying) {
-      timer = setInterval(() => {
-        setTime((prevTime) => prevTime + 1);
-      }, 1000);
-    } else {
-      clearInterval(timer);
+    const savedData = localStorage.getItem('inputPageState');
+    const locationState = location.state;
+    
+    if (locationState) {
+      // ResultPage'den geri dönüldüğünde
+      setSteps(locationState.steps || []);
+      setTime(locationState.time || 0);
+      setIsPlaying(locationState.isPlaying || false);
+      if (locationState.videoSrc) {
+        localStorage.setItem('videoSource', locationState.videoSrc);
+      }
+    } else if (savedData) {
+      // WelcomePage'den geri dönüldüğünde veya sayfa yenilendiğinde
+      const parsedData = JSON.parse(savedData);
+      setSteps(parsedData.steps || []);
+      setTime(parsedData.time || 0);
+      setIsPlaying(parsedData.isPlaying || false);
+      if (parsedData.videoSrc) {
+        localStorage.setItem('videoSource', parsedData.videoSrc);
+      }
     }
-    return () => clearInterval(timer);
-  }, [isPlaying]);
+  }, [location.state]);
 
-  const handleStart = () => {
-    videoRef.current?.play();
-    setIsPlaying(true);
+  // Initialize YouTube API and Player
+  useEffect(() => {
+    if (!videoSrc.includes("youtube.com")) return;
+
+    let player = null;
+    const savedData = localStorage.getItem('inputPageState');
+    let savedVideoTime = 0;
+    let savedIsPlaying = false;
+
+    if (savedData) {
+      const parsedData = JSON.parse(savedData);
+      savedVideoTime = parsedData.videoTime || 0;
+      savedIsPlaying = parsedData.isPlaying || false;
+    }
+
+    // Load YouTube API if not already loaded
+    if (!window.YT) {
+      const tag = document.createElement('script');
+      tag.src = "https://www.youtube.com/iframe_api";
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+      // Wait for API to be ready
+      window.onYouTubeIframeAPIReady = () => {
+        initializePlayer();
+      };
+    } else {
+      // If API is already loaded, initialize player directly
+      initializePlayer();
+    }
+
+    function initializePlayer() {
+      player = new window.YT.Player('youtube-player', {
+        height: '315',
+        width: '560',
+        videoId: getYouTubeVideoId(videoSrc),
+        playerVars: {
+          controls: 1,
+          disablekb: 1,
+          enablejsapi: 1,
+          modestbranding: 1,
+          rel: 0,
+          start: Math.floor(savedVideoTime)
+        },
+        events: {
+          onReady: (event) => {
+            youtubePlayer.current = event.target;
+            playerReadyRef.current = true;
+            console.log('YouTube Player is ready');
+            
+            if (savedVideoTime > 0) {
+              youtubePlayer.current.seekTo(savedVideoTime);
+              if (!savedIsPlaying) {
+                youtubePlayer.current.pauseVideo();
+              }
+            }
+          },
+          onStateChange: (event) => {
+            if (event.data === window.YT.PlayerState.PLAYING) {
+              setIsPlaying(true);
+              startTimer();
+            } else if (event.data === window.YT.PlayerState.PAUSED || event.data === window.YT.PlayerState.ENDED) {
+              setIsPlaying(false);
+              stopTimer();
+            }
+          }
+        }
+      });
+    }
+
+    return () => {
+      stopTimer();
+      playerReadyRef.current = false;
+      if (player) {
+        player.destroy();
+      }
+    };
+  }, [videoSrc]);
+
+  // Save steps to localStorage whenever they change
+  useEffect(() => {
+    const currentVideoTime = videoSrc.includes("youtube.com") 
+      ? (youtubePlayer.current ? youtubePlayer.current.getCurrentTime() : 0)
+      : (videoRef.current ? videoRef.current.currentTime : 0);
+
+    const stateToSave = {
+      steps,
+      time,
+      isPlaying,
+      videoSrc,
+      videoTime: currentVideoTime
+    };
+
+    localStorage.setItem('inputPageState', JSON.stringify(stateToSave));
+  }, [steps, time, isPlaying, videoSrc]);
+
+  const startTimer = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+    timerRef.current = setInterval(() => {
+      setTime(prevTime => prevTime + 1);
+    }, 1000);
   };
 
-  const handlePause = () => {
-    videoRef.current?.pause();
-    setIsPlaying(false);
+  const stopTimer = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  // Zamanı 00.00 formatında göstermek için fonksiyon
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}.${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
   const handleReset = () => {
-    if (videoRef.current) {
-      videoRef.current.pause();
-      videoRef.current.currentTime = 0;
-    }
-    setIsPlaying(false);
     setTime(0);
+    stopTimer();
+  };
+
+  const handleStart = () => {
+    if (videoSrc.includes("youtube.com")) {
+      if (youtubePlayer.current && playerReadyRef.current) {
+        try {
+          youtubePlayer.current.playVideo();
+          setIsPlaying(true);
+          startTimer();
+        } catch (error) {
+          console.error('Error playing video:', error);
+        }
+      }
+    } else if (videoRef.current) {
+      videoRef.current.play();
+      setIsPlaying(true);
+      startTimer();
+    }
+  };
+
+  const handlePause = () => {
+    if (videoSrc.includes("youtube.com")) {
+      if (youtubePlayer.current && playerReadyRef.current) {
+        try {
+          youtubePlayer.current.pauseVideo();
+          setIsPlaying(false);
+          stopTimer();
+        } catch (error) {
+          console.error('Error pausing video:', error);
+        }
+      }
+    } else if (videoRef.current) {
+      videoRef.current.pause();
+      setIsPlaying(false);
+      stopTimer();
+    }
   };
 
   const handleAddProcess = () => {
@@ -61,29 +218,78 @@ export default function InputPage() {
     setProcessType(type);
   };
 
-  const handleSubmitProcess = () => {
-    if (stepDescription.trim()) {
-      setSteps((prevSteps) => [
-        ...prevSteps,
-        {
-          description: stepDescription.trim(),
-          time: processTime,
-          distance: processDistance,
-          confirmed: false,
-        },
-      ]);
-      setStepDescription("");
-      setProcessTime("");
-      setProcessDistance("");
-    }
-    setShowProcessCard(false);
-
-    // Örnek: Process nesnesi
-    const newProcess = new Process(processType, processTime, processDistance, stepDescription);
-    console.log(newProcess);
+  const handleEditStep = (index) => {
+    const stepToEdit = steps[index];
+    setStepDescription(stepToEdit.description);
+    setProcessTime(stepToEdit.time);
+    setProcessDistance(stepToEdit.distance);
+    setProcessType(stepToEdit.operationType);
+    setShowProcessCard(true);
+    
+    setSteps((prevSteps) => {
+      const updatedSteps = [...prevSteps];
+      updatedSteps[index] = {
+        ...updatedSteps[index],
+        isEditing: true
+      };
+      return updatedSteps;
+    });
   };
 
-  // Step onaylamak için (tik)
+  const handleSubmitProcess = () => {
+    // Check if any required field is empty
+    if (!stepDescription.trim()) {
+      alert('Please enter a process description');
+      return;
+    }
+    if (!processTime) {
+      alert('Please enter the time');
+      return;
+    }
+    if (!processDistance) {
+      alert('Please enter the distance');
+      return;
+    }
+    if (!processType) {
+      alert('Please select a process type');
+      return;
+    }
+    if (isValueAdded === undefined) {
+      alert('Please select whether this step is value added or non-value added');
+      return;
+    }
+
+    const newStep = {
+      description: stepDescription.trim(),
+      time: processTime,
+      distance: processDistance,
+      operationType: processType,
+      isValueAdded: isValueAdded,
+      confirmed: false
+    };
+    
+    const editingIndex = steps.findIndex(step => step.isEditing);
+    if (editingIndex !== -1) {
+      setSteps((prevSteps) => {
+        const updatedSteps = [...prevSteps];
+        updatedSteps[editingIndex] = {
+          ...newStep,
+          isEditing: false
+        };
+        return updatedSteps;
+      });
+    } else {
+      setSteps([...steps, newStep]);
+    }
+    
+    setStepDescription("");
+    setProcessTime("");
+    setProcessDistance("");
+    setProcessType("");
+    setIsValueAdded(undefined);
+    setShowProcessCard(false);
+  };
+
   const handleConfirmStep = (index) => {
     setSteps((prevSteps) => {
       const updatedSteps = [...prevSteps];
@@ -92,20 +298,43 @@ export default function InputPage() {
     });
   };
 
-  // Step silmek için (çarpı)
   const handleDeleteStep = (index) => {
     setSteps((prevSteps) => prevSteps.filter((_, i) => i !== index));
   };
 
-  // Onaylı step’i düzenlemek için (edit)
-  // => Tekrar confirmed: false yaparak tik/çarpı görünür hale getiriyoruz
-  const handleEditStep = (index) => {
-    setSteps((prevSteps) => {
-      const updatedSteps = [...prevSteps];
-      updatedSteps[index].confirmed = false;
-      return updatedSteps;
-    });
-    // Burada step’i yeniden düzenlemek için modal/form açabilirsiniz.
+  const handleSubmit = () => {
+    if (steps.length > 0) {
+      console.log("Submitting steps:", steps);
+      const currentVideoTime = videoSrc.includes("youtube.com") 
+        ? (youtubePlayer.current ? youtubePlayer.current.getCurrentTime() : 0)
+        : (videoRef.current ? videoRef.current.currentTime : 0);
+
+      localStorage.setItem('inputPageState', JSON.stringify({
+        steps,
+        time,
+        isPlaying,
+        videoSrc,
+        videoTime: currentVideoTime
+      }));
+      
+      navigate('/result', { 
+        state: { 
+          steps: steps,
+          time: time,
+          isPlaying: isPlaying,
+          videoSrc: videoSrc,
+          videoTime: currentVideoTime
+        } 
+      });
+    } else {
+      alert('Please add at least one step before proceeding.');
+    }
+  };
+
+  // Function to extract video ID from YouTube URL
+  const getYouTubeVideoId = (url) => {
+    const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+    return match ? match[1] : null;
   };
 
   return (
@@ -116,13 +345,26 @@ export default function InputPage() {
         <div className={styles.videoContainer}>
           {videoSrc ? (
             videoSrc.includes("youtube.com") ? (
-              <YouTubePlayer videoSrc={videoSrc} />
+              <div id="youtube-player" className={styles.videoPlayer}></div>
             ) : (
               <video
                 ref={videoRef}
                 src={videoSrc}
                 controls
                 className={styles.videoPlayer}
+                onPlay={() => {
+                  setIsPlaying(true);
+                  startTimer();
+                }}
+                onPause={() => {
+                  setIsPlaying(false);
+                  stopTimer();
+                }}
+                onTimeUpdate={() => {
+                  if (videoRef.current) {
+                    setVideoTime(Math.floor(videoRef.current.currentTime));
+                  }
+                }}
               />
             )
           ) : (
@@ -130,77 +372,80 @@ export default function InputPage() {
           )}
         </div>
 
-        {/* Video YouTube değilse zaman/controls ve steps yanyana gözükecek */}
-        { (
-          <div className={styles.controlsStepsRow}>
-            {/* Process Container Solda */}
-            <div className={styles.processContainer}>
-              <button onClick={handleAddProcess} className="btn btn-primary">
-                + Process
-              </button>
-              <div className={styles.stepsList}>
-                {steps.map((step, index) => (
-                  <div key={index} className={styles.processStep}>
-                    {/* Step Açıklaması */}
-                    <div className={styles.stepText}>
-                      Step {index + 1}: {step.description}
+        {/* Kontroller ve Process Container */}
+        <div className={styles.controlsStepsRow}>
+          {/* Process Container Solda */}
+          <div className={styles.processContainer}>
+            <button onClick={handleAddProcess} className="btn btn-primary">
+              + Step
+            </button>
+            <div className={styles.stepsList}>
+              {steps.map((step, index) => (
+                <div key={index} className={styles.processStep}>
+                  <div className={styles.stepText}>
+                    Step {index + 1}: {step.description}
+                  </div>
+                  {!step.confirmed ? (
+                    <div className={styles.iconContainer}>
+                      <FaCheck
+                        className={styles.checkIcon}
+                        onClick={() => handleConfirmStep(index)}
+                      />
+                      <FaTimes
+                        className={styles.deleteIcon}
+                        onClick={() => handleDeleteStep(index)}
+                      />
                     </div>
-
-                    {/* confirmed: false => tik & çarpı; true => edit ikonu */}
-                    {!step.confirmed ? (
-                      <div className={styles.iconContainer}>
-                        <FaCheck
-                          className={styles.checkIcon}
-                          onClick={() => handleConfirmStep(index)}
-                        />
-                        <FaTimes
-                          className={styles.deleteIcon}
-                          onClick={() => handleDeleteStep(index)}
-                        />
-                      </div>
-                    ) : (
+                  ) : (
+                    <div className={styles.iconContainer}>
                       <FaEdit
                         className={styles.editIcon}
                         onClick={() => handleEditStep(index)}
                       />
-                    )}
-                  </div>
-                ))}
-              </div>
+                      <FaTimes
+                        className={styles.deleteIcon}
+                        onClick={() => handleDeleteStep(index)}
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
-
-            {/* Kontrol Ekranı Sağda */}
-
-                      {
-                        !videoSrc.includes("youtube.com") && (<div className={styles.timeAndControls}>
-              <span className={styles.timeDisplay}>
-                Time: {new Date(time * 1000).toISOString().substr(14, 5)}
-              </span>
-              <div className={styles.controlsContainer}>
-              <button onClick={handleStart} className="btn btn-success">
-                  Start
-                </button>
-                <button onClick={handlePause} className="btn btn-warning">
-                  Pause
-                </button>
-                <button onClick={handleReset} className="btn btn-secondary">
-                  Reset
-                </button>
-              </div>
-            </div>)
-                      }
-
-            
-
           </div>
-        )}
+
+          {/* Kontrol Ekranı Sağda */}
+          <div className={styles.timeAndControls}>
+            <span className={styles.timeDisplay}>
+              {formatTime(time)}
+            </span>
+            <div className={styles.controlsContainer}>
+              <button 
+                onClick={handleStart} 
+                className="btn btn-success"
+              >
+                Start
+              </button>
+              <button 
+                onClick={handlePause} 
+                className="btn btn-warning"
+              >
+                Pause
+              </button>
+              <button 
+                onClick={handleReset} 
+                className="btn btn-secondary"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* SAĞ KISIM */}
       <div className={styles.rightSection}>
         {showProcessCard && (
           <div className={styles.toggledProcessCard}>
-            {/* Çarpı ikonunu kartın en üstüne ekledik */}
             <FaTimes
               className={styles.closeIcon}
               onClick={() => setShowProcessCard(false)}
@@ -220,60 +465,70 @@ export default function InputPage() {
 
             <h5 style={{ paddingTop: "1.5rem" }}>
               Type of the processes{" "}
-              <FaInfoCircle
-                style={{ color: "blue", height: "1rem", position: "relative", top: "0px", left: "0.5rem" }}
-              />
+              <div style={{ position: 'relative', display: 'inline-block' }}>
+                <FaInfoCircle className={styles.infoIcon} />
+                <div className={styles.infoTooltip}>
+                  <div><strong>Operation:</strong> A task where something is created, changed, or assembled.</div>
+                  <div><strong>Transportation:</strong> Moving materials or products from one location to another.</div>
+                  <div><strong>Delay:</strong> Waiting time when no activity is being performed.</div>
+                  <div><strong>Storage:</strong> Keeping materials or products in a designated place for future use.</div>
+                  <div><strong>Inspection:</strong> Checking the quality, quantity, or condition of an item or process.</div>
+                </div>
+              </div>
             </h5>
 
             <div className={styles.processIcons}>
-              <div
-                className={`${styles.processPhotoContainer} ${
-                  processType === "Operation" ? styles.selected : ""
-                }`}
-                onClick={handleClickOfProcessType("Operation")}
-              >
-                <img src="Operation.svg" alt="Operation" className={styles.processPhotoContainerPhoto} />
-                <span className={styles.processText}>Operation</span>
-              </div>
+              <div className={styles.processIconsRow}>
+                <div
+                  className={`${styles.processPhotoContainer} ${
+                    processType === "Operation" ? styles.selected : ""
+                  }`}
+                  onClick={handleClickOfProcessType("Operation")}
+                >
+                  <img src="Operation.svg" alt="Operation" className={styles.processPhotoContainerPhoto} />
+                  <span className={styles.processText}>Operation</span>
+                </div>
 
-              <div
-                className={`${styles.processPhotoContainer} ${
-                  processType === "Transportation" ? styles.selected : ""
-                }`}
-                onClick={handleClickOfProcessType("Transportation")}
-              >
-                <img src="Transportation.svg" alt="Transportation" className={styles.processPhotoContainerPhoto} />
-                <span className={styles.processText}>Transportation</span>
-              </div>
+                <div
+                  className={`${styles.processPhotoContainer} ${
+                    processType === "Transportation" ? styles.selected : ""
+                  }`}
+                  onClick={handleClickOfProcessType("Transportation")}
+                >
+                  <img src="Transportation.svg" alt="Transportation" className={styles.processPhotoContainerPhoto} />
+                  <span className={styles.processText}>Transportation</span>
+                </div>
 
-              <div
-                className={`${styles.processPhotoContainer} ${
-                  processType === "Delay" ? styles.selected : ""
-                }`}
-                onClick={handleClickOfProcessType("Delay")}
-              >
-                <img src="Delay.svg" alt="Delay" className={styles.processPhotoContainerPhoto} />
-                <span className={styles.processText}>Delay</span>
+                <div
+                  className={`${styles.processPhotoContainer} ${
+                    processType === "Delay" ? styles.selected : ""
+                  }`}
+                  onClick={handleClickOfProcessType("Delay")}
+                >
+                  <img src="Delay.svg" alt="Delay" className={styles.processPhotoContainerPhoto} />
+                  <span className={styles.processText}>Delay</span>
+                </div>
               </div>
+              <div className={styles.processIconsRow}>
+                <div
+                  className={`${styles.processPhotoContainer} ${
+                    processType === "Storage" ? styles.selected : ""
+                  }`}
+                  onClick={handleClickOfProcessType("Storage")}
+                >
+                  <img src="Storage.svg" alt="Storage" className={styles.processPhotoContainerPhoto} />
+                  <span className={styles.processText}>Storage</span>
+                </div>
 
-              <div
-                className={`${styles.processPhotoContainer} ${
-                  processType === "Storage" ? styles.selected : ""
-                }`}
-                onClick={handleClickOfProcessType("Storage")}
-              >
-                <img src="Storage.svg" alt="Storage" className={styles.processPhotoContainerPhoto} />
-                <span className={styles.processText}>Storage</span>
-              </div>
-
-              <div
-                className={`${styles.processPhotoContainer} ${
-                  processType === "Inspection" ? styles.selected : ""
-                }`}
-                onClick={handleClickOfProcessType("Inspection")}
-              >
-                <img src="Inspection.svg" alt="Inspection" className={styles.processPhotoContainerPhoto} />
-                <span className={styles.processText}>Inspection</span>
+                <div
+                  className={`${styles.processPhotoContainer} ${
+                    processType === "Inspection" ? styles.selected : ""
+                  }`}
+                  onClick={handleClickOfProcessType("Inspection")}
+                >
+                  <img src="Inspection.svg" alt="Inspection" className={styles.processPhotoContainerPhoto} />
+                  <span className={styles.processText}>Inspection</span>
+                </div>
               </div>
             </div>
 
@@ -298,23 +553,53 @@ export default function InputPage() {
                 />
               </div>
               <div>
-                <label>Distance (cm)</label>
+                <label>Distance (m)</label>
                 <input
                   type="number"
                   value={processDistance}
                   onChange={(e) => {
                     const value = e.target.value;
-                    if (/^\d*$/.test(value)) {
+                    if (/^\d*\.?\d*$/.test(value)) {
                       setProcessDistance(value);
                     }
                   }}
                   className="form-control"
                   onKeyPress={(event) => {
-                    if (!/[0-9]/.test(event.key)) {
+                    if (!/[0-9.]/.test(event.key)) {
                       event.preventDefault();
                     }
                   }}
+                  step="0.01"
                 />
+              </div>
+              <div>
+                <label>Value Added / Non-Value Added</label>
+                <div className={styles.radioGroup}>
+                  <div className="form-check">
+                    <input
+                      className="form-check-input"
+                      type="radio"
+                      name="valueAdded"
+                      id="valueAdded"
+                      onChange={() => setIsValueAdded(true)}
+                    />
+                    <label className="form-check-label" htmlFor="valueAdded">
+                      Value Added
+                    </label>
+                  </div>
+                  <div className="form-check">
+                    <input
+                      className="form-check-input"
+                      type="radio"
+                      name="valueAdded"
+                      id="nonValueAdded"
+                      onChange={() => setIsValueAdded(false)}
+                    />
+                    <label className="form-check-label" htmlFor="nonValueAdded">
+                      Non-Value Added
+                    </label>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -327,11 +612,11 @@ export default function InputPage() {
 
       {/* Sağ Alt Köşedeki Back ve Output Butonları */}
       <div className={styles.navigationButtons}>
-        <button onClick={() => navigate("/welcome")} className={styles.navButton}>
+        <button onClick={() => navigate("/welcome")} className={`${styles.navButton} ${styles.backButton}`}>
           ❮ Back
         </button>
-        <button onClick={() => navigate("/result")} className={styles.navButton}>
-          Output ❯
+        <button onClick={handleSubmit} className={`${styles.navButton} ${styles.generateResultButton}`}>
+          Generate Result ❯
         </button>
       </div>
     </div>

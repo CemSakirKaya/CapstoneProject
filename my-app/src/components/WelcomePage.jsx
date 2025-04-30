@@ -1,35 +1,69 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom"; // For navigation
 import styles from "./WelcomePage.module.css";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { FaVideo, FaLink } from "react-icons/fa";
+import { FaVideo, FaLink, FaRedo } from "react-icons/fa";
 
 export default function WelcomePage() {
   const navigate = useNavigate();
   const [videoFile, setVideoFile] = useState(null);
   const [videoURL, setVideoURL] = useState("");
 
+  // Check localStorage for video source when component mounts
+  useEffect(() => {
+    const savedVideoSource = localStorage.getItem('videoSource');
+    if (savedVideoSource) {
+      if (savedVideoSource.includes('youtube.com')) {
+        setVideoURL(savedVideoSource);
+      } else if (savedVideoSource.startsWith('blob:')) {
+        setVideoFile(savedVideoSource);
+      } else {
+        setVideoURL(savedVideoSource);
+      }
+    }
+  }, []);
+
   // Handle file selection
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
+      // Clear previous data when video changes
+      localStorage.removeItem('processSteps');
+      localStorage.removeItem('inputPageState');
+      
       setVideoFile(URL.createObjectURL(file));
       console.log("Selected file:", file.name);
     }
+  };
+
+  // Handle video change
+  const handleChangeVideo = () => {
+    // Clear previous data when video changes
+    localStorage.removeItem('processSteps');
+    localStorage.removeItem('inputPageState');
+    
+    setVideoFile(null);
+    setVideoURL("");
   };
 
   const handleURLInput = () => {
     const url = prompt("Enter video URL:");
     if (!url) return; // If user cancels
   
-    // Check if it's a YouTube URL
+    // Clear previous data when video changes
+    localStorage.removeItem('processSteps');
+    localStorage.removeItem('inputPageState');
+  
+    // Check if it's a YouTube URL and extract video ID
     const youtubeMatch = url.match(
-      /(?:youtube\.com\/(?:.*v=|.*\/)|youtu.be\/)([^#\&\?]{11})/
+      /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i
     );
   
     if (youtubeMatch) {
       const videoId = youtubeMatch[1];
-      setVideoURL(`https://www.youtube.com/embed/${videoId}`);
+      // Store the original YouTube URL
+      const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+      setVideoURL(videoUrl);
       console.log("YouTube Video ID:", videoId);
       return;
     }
@@ -61,10 +95,36 @@ export default function WelcomePage() {
   // Navigate to InputPage with selected video
   const handleNext = () => {
     if (videoFile || videoURL) {
-      navigate("/input", { state: { videoSrc: videoFile || videoURL } });
+      let videoSource = videoFile || videoURL;
+      
+      // Save video source to localStorage
+      localStorage.setItem('videoSource', videoSource);
+      
+      // Get existing state from localStorage
+      const existingState = localStorage.getItem('inputPageState');
+      const parsedState = existingState ? JSON.parse(existingState) : null;
+      
+      // Navigate to input page with the video source and existing state
+      navigate("/input", { 
+        state: { 
+          videoSrc: videoSource,
+          ...(parsedState && {
+            steps: parsedState.steps,
+            time: parsedState.time,
+            isPlaying: parsedState.isPlaying,
+            videoTime: parsedState.videoTime
+          })
+        } 
+      });
     } else {
       alert("Please select or add a video first!");
     }
+  };
+
+  // Function to extract video ID from YouTube URL
+  const getYouTubeVideoId = (url) => {
+    const match = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i);
+    return match ? match[1] : null;
   };
 
   return (
@@ -79,71 +139,98 @@ export default function WelcomePage() {
       </div>
 
       {/* Drag & Drop Box */}
-      <div
-        className={styles.uploadBox}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-      >
-        <div className="text-center">
-          <div className={styles.uploadIcon}>
-            <span>&#8679;</span>
-          </div>
-          <p className={styles.uploadText}>
-            Drag Files To Upload Video <br />
-            or <span className={styles.selectOption}>Select an Option Below</span>
-          </p>
-          <div className={styles.buttonContainer}>
-            {/* File input (hidden) */}
-            <input
-              type="file"
-              accept="video/*"
-              onChange={handleFileChange}
-              id="fileInput"
-              style={{ display: "none" }}
-            />
-            <button
-              className={`${styles.uploadButton} btn btn-primary`}
-              onClick={() => document.getElementById("fileInput").click()}
-            >
-              <FaVideo /> Add Video
-            </button>
-            <button
-              className={`${styles.uploadButton} btn btn-danger`}
-              onClick={handleURLInput}
-            >
-              <FaLink /> Use a URL
-            </button>
+      {!(videoFile || videoURL) && (
+        <div
+          className={styles.uploadBox}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+        >
+          <div className="text-center">
+            <div className={styles.uploadIcon}>
+              <span>&#8679;</span>
+            </div>
+            <p className={styles.uploadText}>
+              Drag Files To Upload Video <br />
+              or <span className={styles.selectOption}>Select an Option Below</span>
+            </p>
+            <div className={styles.buttonContainer}>
+              {/* File input (hidden) */}
+              <input
+                type="file"
+                accept="video/*"
+                onChange={handleFileChange}
+                id="fileInput"
+                style={{ display: "none" }}
+              />
+              <button
+                className={`${styles.uploadButton} btn btn-primary`}
+                onClick={() => document.getElementById("fileInput").click()}
+              >
+                <FaVideo /> Add Video
+              </button>
+              <button
+                className={`${styles.uploadButton} btn btn-danger`}
+                onClick={handleURLInput}
+              >
+                <FaLink /> Use a URL
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Video Preview */}
       <div className="text-center mt-3">
         {videoURL ? (
           videoURL.includes("youtube.com") ? (
-            <iframe
+            <div className={styles.videoContainer}>
+              <iframe
+                width="560"
+                height="315"
+                src={`https://www.youtube.com/embed/${getYouTubeVideoId(videoURL)}`}
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className={styles.videoPlayer}
+              ></iframe>
+              <button
+                className={`${styles.changeVideoButton} btn btn-secondary`}
+                onClick={handleChangeVideo}
+              >
+                <FaRedo /> Change Video
+              </button>
+            </div>
+          ) : (
+            <div className={styles.videoContainer}>
+              <video
+                src={videoURL}
+                controls
+                className={styles.videoPlayer}
+              />
+              <button
+                className={`${styles.changeVideoButton} btn btn-secondary`}
+                onClick={handleChangeVideo}
+              >
+                <FaRedo /> Change Video
+              </button>
+            </div>
+          )
+        ) : videoFile ? (
+          <div className={styles.videoContainer}>
+            <video
               width="560"
               height="315"
-              src={videoURL}
-              frameBorder="0"
-              allowFullScreen
-              className={styles.videoPlayer}
-            ></iframe>
-          ) : (
-            <video
-              src={videoURL}
+              src={videoFile}
               controls
               className={styles.videoPlayer}
             />
-          )
-        ) : videoFile ? (
-          <video
-            width="560"
-            height="315"
-            src={videoFile}
-            controls
-            className={styles.videoPlayer}
-          />
+            <button
+              className={`${styles.changeVideoButton} btn btn-secondary`}
+              onClick={handleChangeVideo}
+            >
+              <FaRedo /> Change Video
+            </button>
+          </div>
         ) : null}
       </div>
 

@@ -1,0 +1,21 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    stdin_open: true
+    tty: true
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ../../caps_10/backend-1
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"

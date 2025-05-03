@@ -1,0 +1,153 @@
+.welcomeContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start; /* Yukarıdan başlayacak şekilde */
+  background-color: #f5fafa;
+  width: 100%;
+  height: 100vh; 
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow-x: scroll;
+
+  /* Logonun içerikle çakışmaması için ek bir üst boşluk */
+  padding-top: 120px;
+}
+
+/* Logo Sabit (fixed) en üst ortada */
+.logoContainer {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999; /* Logonun en üstte kalması için */
+}
+
+/* Logonun boyutu */
+.logo {
+  max-width: 300px; /* İsteğe göre ayarlayabilirsiniz */
+  height: auto;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.uploadBox {
+  border: 2px dashed black;
+  padding: 30px;
+  border-radius: 15px;
+  text-align: center;
+  background-color: white;
+  width: 50%;
+}
+
+.uploadIcon {
+  background-color: #cce5ff;
+  display: inline-block;
+  padding: 15px;
+  border-radius: 50%;
+  font-size: 24px;
+}
+
+.uploadText {
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+.selectOption {
+  color: blue;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.buttonContainer {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.uploadButton {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+}
+
+.videoPlayer {
+  width: 560px;
+  height: 315px;
+  max-width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  margin-bottom: 20px; /* Increased margin for better spacing */
+}
+
+.videoContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 20px;
+}
+
+/* NAVIGATION BUTTONS: 
+   sabit konumda sağ altta
+*/
+.navigationButtons {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  gap: 1rem;
+  z-index: 9999;
+}
+
+/* NAV BUTTON (Aynı stil InputPage ile) */
+.navButton {
+  background-color: #6cb8f6;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex; /* or inline-flex */
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  transition: background-color 0.3s ease, transform 0.2s;
+}
+
+.navButton:hover {
+  background-color: #5aa4e0;
+  transform: scale(1.05);
+}
+
+.changeVideoButton {
+  background-color: #6cb8f6;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  transition: background-color 0.3s ease, transform 0.2s;
+  margin-top: 10px;
+  width: fit-content;
+  gap: 8px;
+}
+
+.changeVideoButton:hover {
+  background-color: #5aa4e0;
+  transform: scale(1.05);
+}

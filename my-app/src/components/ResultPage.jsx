@@ -1,41 +1,114 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react"; 
 import { useNavigate, useLocation } from "react-router-dom";
 import styles from "./ResultPage.module.css";
 import { FaSave, FaInfoCircle } from "react-icons/fa";
 
-export default function ResultPage() {
+
+export default function ResultPage() { 
   const navigate = useNavigate();
   const location = useLocation();
-  const steps = location.state?.steps || [];
+  const [loading, setLoading] = useState(true);
   const contentRef = useRef(null);
   const [isSaving, setIsSaving] = useState(false);
-
+  
+  const [steps, setSteps] = useState([]);
+  
+  
+  useEffect(() => {
+    const locationSteps = location.state?.steps;
+    const saved = localStorage.getItem("inputPageState");
+    const localSteps = saved ? JSON.parse(saved).steps || [] : [];
+  
+    const combinedSteps = locationSteps?.length ? locationSteps : localSteps;
+  
+    setSteps(combinedSteps);
+    setLoading(false);
+  }, [location.state]);
+  
+  
   const handleSave = async () => {
+    console.log("Save button clicked");
+  
+    const baseUrl = process.env.REACT_APP_API_BASE;
+  
     try {
       setIsSaving(true);
-      // PDF generation code will be implemented later
-      alert('PDF generation feature is coming soon!');
+  
+      // 1. Adım: Step'leri backend'e gönder
+      const payload = steps.map((step) => ({
+        description: step.description,
+        time: parseInt(step.time, 10),
+        distance: parseInt(step.distance, 10),
+        type: step.type.toUpperCase(),
+        valueAdded: step.isValueAdded
+      }));
+  
+      console.log("PDF payload being sent:", payload);
+  
+      const postResponse = await fetch(`${baseUrl}/api/flowchart/add-steps`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+  
+      if (!postResponse.ok) {
+        throw new Error("Failed to send steps to backend.");
+      }
+  
+      // 2. Adım: PDF iste
+      const pdfResponse = await fetch(`${baseUrl}/api/report/pdf`, {
+        method: "GET",
+        headers: {
+          "ngrok-skip-browser-warning": "1",
+          "User-Agent": "Mozilla/5.0 PDFClient"
+        }
+      });
+      
+      const contentType = pdfResponse.headers.get("Content-Type");
+      console.log("Content-Type of PDF response:", contentType);
+      
+      if (!pdfResponse.ok || !contentType.includes("application/pdf")) {
+        const text = await pdfResponse.text(); // sadece hata varsa oku
+        console.error(" PDF generation failed. Server responded with:", text.slice(0, 300));
+        alert("PDF alınamadı:\n" + text);
+        return;
+      }
+      
+      // ✅ sadece buraya geldiysen blob al
+      const blob = await pdfResponse.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "FlowchartReport.pdf";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+  
     } catch (error) {
-      console.error('Error:', error);
-      alert('Failed to generate PDF. Please try again.');
+      console.error("Error during save as PDF:", error);
+      alert("Failed to generate PDF. Please try again.");
     } finally {
       setIsSaving(false);
     }
   };
+  
+  
 
   const getOperationIcons = (selectedType) => {
-    const operationTypes = ['Operation', 'Transportation', 'Inspection', 'Delay', 'Storage'];
-    
+    const operationTypes = ['OPERATION', 'TRANSPORTATION', 'INSPECTION', 'DELAY', 'STORAGE'];
+  
     return (
       <div className={styles.operationSymbols}>
         {operationTypes.map((type) => (
-          <div 
-            key={type} 
+          <div
+            key={type}
             className={`${styles.symbolWrapper} ${selectedType === type ? styles.selected : ''}`}
           >
-            <img 
-              src={`/${type}.svg`} 
-              alt={type} 
+            <img
+              src={`/${type.charAt(0) + type.slice(1).toLowerCase()}.svg`}
+              alt={type}
               className={styles.symbolIcon}
             />
           </div>
@@ -43,8 +116,8 @@ export default function ResultPage() {
       </div>
     );
   };
+  
 
-  // Calculate percentages for each operation type
   const calculateOperationPercentages = () => {
     if (steps.length === 0) return {
       Operation: 0,
@@ -53,21 +126,23 @@ export default function ResultPage() {
       Storage: 0,
       Inspection: 0
     };
-
+  
     const counts = steps.reduce((acc, step) => {
-      acc[step.operationType] = (acc[step.operationType] || 0) + 1;
+      const type = (step.type || "").toUpperCase(); // normalize
+      acc[type] = (acc[type] || 0) + 1;
       return acc;
     }, {});
-
+  
     const total = steps.length;
     return {
-      Operation: Math.round((counts.Operation || 0) / total * 100),
-      Transportation: Math.round((counts.Transportation || 0) / total * 100),
-      Delay: Math.round((counts.Delay || 0) / total * 100),
-      Storage: Math.round((counts.Storage || 0) / total * 100),
-      Inspection: Math.round((counts.Inspection || 0) / total * 100)
+      Operation: Math.round((counts["OPERATION"] || 0) / total * 100),
+      Transportation: Math.round((counts["TRANSPORTATION"] || 0) / total * 100),
+      Delay: Math.round((counts["DELAY"] || 0) / total * 100),
+      Storage: Math.round((counts["STORAGE"] || 0) / total * 100),
+      Inspection: Math.round((counts["INSPECTION"] || 0) / total * 100)
     };
   };
+  
 
   const operationPercentages = calculateOperationPercentages();
 
@@ -100,15 +175,35 @@ export default function ResultPage() {
   return (
     <div className={styles.resultPageContainer}>
       {/* Save icon with loading state */}
-      <div 
-        className={`${styles.saveIcon} ${isSaving ? styles.saving : ''}`} 
+      
+      
+
+      <button
+        type="button"
         onClick={handleSave}
-      >
-        <FaSave size={20} />
-        <span className={styles.saveIconText}>
-          {isSaving ? 'Saving...' : 'Save as PDF'}
-        </span>
-      </div>
+        className={`${styles.downloadButton}`}
+        style={{
+        position: "fixed",
+        bottom: "20px",
+        right: "20px",
+        zIndex: 9999,
+        padding: "0.75rem 1.25rem",
+        backgroundColor: "#6cb8f6",
+        color: "#fff",
+        border: "none",
+        borderRadius: "50px",
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        gap: "0.5rem",
+        boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+      }}
+    >
+        <FaSave />
+        <span>Save as PDF</span>
+      </button>
+
+
 
       <div ref={contentRef} className={styles.contentWrapper}>
         {/* SOL KISIM */}
@@ -169,7 +264,7 @@ export default function ResultPage() {
               <div className={styles.operationBody}>
                 {steps.map((step, index) => (
                   <div key={index} className={styles.operationRow}>
-                    {getOperationIcons(step.operationType)}
+                    {getOperationIcons(step.type)}
                   </div>
                 ))}
               </div>

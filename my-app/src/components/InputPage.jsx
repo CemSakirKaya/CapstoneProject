@@ -29,7 +29,7 @@ export default function InputPage() {
   useEffect(() => {
     const savedData = localStorage.getItem('inputPageState');
     const locationState = location.state;
-    
+  
     if (locationState) {
       // ResultPage'den geri dönüldüğünde
       setSteps(locationState.steps || []);
@@ -38,8 +38,19 @@ export default function InputPage() {
       if (locationState.videoSrc) {
         localStorage.setItem('videoSource', locationState.videoSrc);
       }
+  
+      // 🔥 Yeni ek: gelen veriyi localStorage’a da yaz
+      const stateToSave = {
+        steps: locationState.steps || [],
+        time: locationState.time || 0,
+        isPlaying: locationState.isPlaying || false,
+        videoSrc: locationState.videoSrc || "",
+        videoTime: locationState.videoTime || 0
+      };
+      localStorage.setItem('inputPageState', JSON.stringify(stateToSave));
+  
     } else if (savedData) {
-      // WelcomePage'den geri dönüldüğünde veya sayfa yenilendiğinde
+      // WelcomePage'den veya yenilemeden gelinmişse
       const parsedData = JSON.parse(savedData);
       setSteps(parsedData.steps || []);
       setTime(parsedData.time || 0);
@@ -49,6 +60,7 @@ export default function InputPage() {
       }
     }
   }, [location.state]);
+  
 
   // Initialize YouTube API and Player
   useEffect(() => {
@@ -215,7 +227,7 @@ export default function InputPage() {
   };
 
   const handleClickOfProcessType = (type) => () => {
-    setProcessType(type);
+    setProcessType(type.toUpperCase());
   };
 
   const handleEditStep = (index) => {
@@ -223,7 +235,7 @@ export default function InputPage() {
     setStepDescription(stepToEdit.description);
     setProcessTime(stepToEdit.time);
     setProcessDistance(stepToEdit.distance);
-    setProcessType(stepToEdit.operationType);
+    setProcessType(stepToEdit.type);
     setShowProcessCard(true);
     
     setSteps((prevSteps) => {
@@ -263,7 +275,7 @@ export default function InputPage() {
       description: stepDescription.trim(),
       time: processTime,
       distance: processDistance,
-      operationType: processType,
+      type: processType.toUpperCase(),
       isValueAdded: isValueAdded,
       confirmed: false
     };
@@ -302,34 +314,39 @@ export default function InputPage() {
     setSteps((prevSteps) => prevSteps.filter((_, i) => i !== index));
   };
 
+  const getCurrentVideoTime = () => {
+    return videoSrc.includes("youtube.com")
+      ? (youtubePlayer.current ? youtubePlayer.current.getCurrentTime() : 0)
+      : (videoRef.current ? videoRef.current.currentTime : 0);
+  };
+  
   const handleSubmit = () => {
-    if (steps.length > 0) {
-      console.log("Submitting steps:", steps);
-      const currentVideoTime = videoSrc.includes("youtube.com") 
-        ? (youtubePlayer.current ? youtubePlayer.current.getCurrentTime() : 0)
-        : (videoRef.current ? videoRef.current.currentTime : 0);
-
-      localStorage.setItem('inputPageState', JSON.stringify({
-        steps,
+    console.log("Submit button clicked");
+  
+    const confirmedSteps = steps.filter(step => step.confirmed);
+  
+    console.log("Confirmed steps:", confirmedSteps);
+  
+    if (confirmedSteps.length === 0) {
+      alert("Please confirm at least one step before submitting.");
+      return;
+    }
+  
+    const videoTime = getCurrentVideoTime();
+  
+    navigate("/result", {
+      state: {
+        steps: confirmedSteps,
         time,
         isPlaying,
         videoSrc,
-        videoTime: currentVideoTime
-      }));
-      
-      navigate('/result', { 
-        state: { 
-          steps: steps,
-          time: time,
-          isPlaying: isPlaying,
-          videoSrc: videoSrc,
-          videoTime: currentVideoTime
-        } 
-      });
-    } else {
-      alert('Please add at least one step before proceeding.');
-    }
+        videoTime
+      }
+    });
   };
+  
+  
+  
 
   // Function to extract video ID from YouTube URL
   const getYouTubeVideoId = (url) => {
@@ -481,7 +498,7 @@ export default function InputPage() {
               <div className={styles.processIconsRow}>
                 <div
                   className={`${styles.processPhotoContainer} ${
-                    processType === "Operation" ? styles.selected : ""
+                    processType === "OPERATION" ? styles.selected : ""
                   }`}
                   onClick={handleClickOfProcessType("Operation")}
                 >
@@ -491,7 +508,7 @@ export default function InputPage() {
 
                 <div
                   className={`${styles.processPhotoContainer} ${
-                    processType === "Transportation" ? styles.selected : ""
+                    processType === "TRANSPORTATION" ? styles.selected : ""
                   }`}
                   onClick={handleClickOfProcessType("Transportation")}
                 >
@@ -501,7 +518,7 @@ export default function InputPage() {
 
                 <div
                   className={`${styles.processPhotoContainer} ${
-                    processType === "Delay" ? styles.selected : ""
+                    processType === "DELAY" ? styles.selected : ""
                   }`}
                   onClick={handleClickOfProcessType("Delay")}
                 >
@@ -512,7 +529,7 @@ export default function InputPage() {
               <div className={styles.processIconsRow}>
                 <div
                   className={`${styles.processPhotoContainer} ${
-                    processType === "Storage" ? styles.selected : ""
+                    processType === "STORAGE" ? styles.selected : ""
                   }`}
                   onClick={handleClickOfProcessType("Storage")}
                 >
@@ -522,7 +539,7 @@ export default function InputPage() {
 
                 <div
                   className={`${styles.processPhotoContainer} ${
-                    processType === "Inspection" ? styles.selected : ""
+                    processType === "INSPECTION" ? styles.selected : ""
                   }`}
                   onClick={handleClickOfProcessType("Inspection")}
                 >

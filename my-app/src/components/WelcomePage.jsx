@@ -9,50 +9,69 @@ export default function WelcomePage() {
   const [videoFile, setVideoFile] = useState(null);
   const [videoURL, setVideoURL] = useState("");
 
-  // Check localStorage for video source when component mounts
-  useEffect(() => {
-    const savedVideoSource = localStorage.getItem('videoSource');
-    if (savedVideoSource) {
-      if (savedVideoSource.includes('youtube.com')) {
-        setVideoURL(savedVideoSource);
-      } else if (savedVideoSource.startsWith('blob:')) {
-        setVideoFile(savedVideoSource);
-      } else {
-        setVideoURL(savedVideoSource);
-      }
+  const resetBackendFlowchart = async () => {
+    const baseUrl = process.env.REACT_APP_API_BASE;
+    try {
+      await fetch(`${baseUrl}/api/flowchart/reset`, { method: "DELETE" });
+      console.log(" Backend resetlendi");
+    } catch (error) {
+      console.error(" Backend reset hatası:", error);
     }
-  }, []);
+  };
+
+// Check localStorage for video source when component mounts
+useEffect(() => {
+  // Temiz başlangıç için localStorage temizleniyor
+  localStorage.removeItem("videoSource");
+  localStorage.removeItem("processSteps");
+  localStorage.removeItem("inputPageState");
+
+  // Video gösterme işlemi sıfırlanıyor
+  setVideoFile(null);
+  setVideoURL("");
+}, []);
+
+
+  
 
   // Handle file selection
-  const handleFileChange = (event) => {
+  const handleFileChange = async (event) => {
     const file = event.target.files[0];
+
     if (file) {
       // Clear previous data when video changes
       localStorage.removeItem('processSteps');
       localStorage.removeItem('inputPageState');
-      
+      await resetBackendFlowchart();
+
       setVideoFile(URL.createObjectURL(file));
       console.log("Selected file:", file.name);
     }
   };
 
   // Handle video change
-  const handleChangeVideo = () => {
+  const handleChangeVideo = async () => {
     // Clear previous data when video changes
     localStorage.removeItem('processSteps');
     localStorage.removeItem('inputPageState');
-    
+    await resetBackendFlowchart();
+
     setVideoFile(null);
     setVideoURL("");
   };
 
-  const handleURLInput = () => {
+  
+  
+
+  const handleURLInput = async () => {
     const url = prompt("Enter video URL:");
     if (!url) return; // If user cancels
   
     // Clear previous data when video changes
     localStorage.removeItem('processSteps');
     localStorage.removeItem('inputPageState');
+    await resetBackendFlowchart();
+
   
     // Check if it's a YouTube URL and extract video ID
     const youtubeMatch = url.match(
@@ -82,11 +101,14 @@ export default function WelcomePage() {
   const handleDragOver = (event) => {
     event.preventDefault();
   };
-
-  const handleDrop = (event) => {
+  const handleDrop = async (event) => {
     event.preventDefault();
     const file = event.dataTransfer.files[0];
     if (file) {
+      localStorage.removeItem('processSteps');
+      localStorage.removeItem('inputPageState');
+      await resetBackendFlowchart(); // 🔥 backend temizle
+
       setVideoFile(URL.createObjectURL(file));
       console.log("Dropped file:", file.name);
     }
